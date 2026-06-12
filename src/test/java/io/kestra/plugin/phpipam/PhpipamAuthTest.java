@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.plugin.phpipam.ipam.SectionList;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.*;
 
@@ -47,9 +46,9 @@ class PhpipamAuthTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody(WireMockSupport.successListBody("[{\"id\":\"1\",\"name\":\"Main\"}]"))));
 
-        var task = SectionList.builder()
+        var task = io.kestra.plugin.phpipam.ipam.section.List.builder()
             .id(UUID.randomUUID().toString())
-            .type(SectionList.class.getName())
+            .type(io.kestra.plugin.phpipam.ipam.section.List.class.getName())
             .baseUrl(Property.ofValue(WireMockSupport.baseUrl(wireMock)))
             .appId(Property.ofValue("myapp"))
             .auth(PhpipamAuthentication.builder()
@@ -76,9 +75,9 @@ class PhpipamAuthTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody(WireMockSupport.successListBody("[{\"id\":\"2\",\"name\":\"Dev\"}]"))));
 
-        var task = SectionList.builder()
+        var task = io.kestra.plugin.phpipam.ipam.section.List.builder()
             .id(UUID.randomUUID().toString())
-            .type(SectionList.class.getName())
+            .type(io.kestra.plugin.phpipam.ipam.section.List.class.getName())
             .baseUrl(Property.ofValue(WireMockSupport.baseUrl(wireMock)))
             .appId(Property.ofValue("myapp"))
             .auth(PhpipamAuthentication.builder()
@@ -94,9 +93,9 @@ class PhpipamAuthTest {
 
     @Test
     void both_auth_modes_throws_validation_error() {
-        var task = SectionList.builder()
+        var task = io.kestra.plugin.phpipam.ipam.section.List.builder()
             .id(UUID.randomUUID().toString())
-            .type(SectionList.class.getName())
+            .type(io.kestra.plugin.phpipam.ipam.section.List.class.getName())
             .baseUrl(Property.ofValue(WireMockSupport.baseUrl(wireMock)))
             .appId(Property.ofValue("myapp"))
             .auth(PhpipamAuthentication.builder()
@@ -111,9 +110,9 @@ class PhpipamAuthTest {
 
     @Test
     void no_auth_mode_throws_validation_error() {
-        var task = SectionList.builder()
+        var task = io.kestra.plugin.phpipam.ipam.section.List.builder()
             .id(UUID.randomUUID().toString())
-            .type(SectionList.class.getName())
+            .type(io.kestra.plugin.phpipam.ipam.section.List.class.getName())
             .baseUrl(Property.ofValue(WireMockSupport.baseUrl(wireMock)))
             .appId(Property.ofValue("myapp"))
             .auth(PhpipamAuthentication.builder().build())
