@@ -44,28 +44,24 @@ public class PhpipamClient {
     private final HttpClient httpClient;
     private final String basePrefix;
     private final String resolvedToken;
-    private final boolean isAppToken;
 
     /**
      * @param baseUrl     root URL of the phpIPAM instance, e.g. {@code https://ipam.example.com}
      * @param appId       application ID segment, e.g. {@code myapp}
      * @param token       resolved authentication token (App token or session token)
-     * @param isAppToken  {@code true} → use {@code X-App-Token} header;
-     *                    {@code false} → use {@code Token} header (session token)
      * @param insecureTls {@code true} to bypass TLS certificate validation
      */
     public PhpipamClient(String baseUrl, String appId, String token,
-                         boolean isAppToken, boolean insecureTls) throws Exception {
+                         boolean insecureTls) throws Exception {
         this.basePrefix = stripTrailingSlash(baseUrl) + "/api/" + appId;
         this.resolvedToken = token;
-        this.isAppToken = isAppToken;
 
         var builder = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(30));
         if (insecureTls) {
             builder.sslContext(trustAllSslContext());
         }
-        this.httpClient = builder.build();
+        httpClient = builder.build();
     }
 
     /**
@@ -159,14 +155,11 @@ public class PhpipamClient {
 
     private HttpRequest.Builder baseRequest(String path) {
         var uri = URI.create(basePrefix + "/" + stripLeadingSlash(path));
-        var builder = HttpRequest.newBuilder(uri)
-            .header("Content-Type", "application/json");
-        if (isAppToken) {
-            builder.header("X-App-Token", resolvedToken);
-        } else {
-            builder.header("Token", resolvedToken);
-        }
-        return builder;
+        // phpIPAM reads credentials exclusively from the "token" header ($_SERVER['HTTP_TOKEN'])
+        // for both static app-code tokens and user session tokens — no X-App-Token header exists.
+        return HttpRequest.newBuilder(uri)
+            .header("Content-Type", "application/json")
+            .header("token", resolvedToken);
     }
 
     private <T> T send(HttpRequest request,

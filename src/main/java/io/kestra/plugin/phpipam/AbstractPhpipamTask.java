@@ -91,17 +91,14 @@ public abstract class AbstractPhpipamTask extends Task {
         }
 
         String token;
-        boolean isAppToken;
         if (hasAppToken) {
             token = runContext.render(appToken).as(String.class).orElseThrow();
-            isAppToken = true;
         } else {
             var rUsername = runContext.render(username).as(String.class).orElseThrow();
             var rPassword = runContext.render(password).as(String.class).orElseThrow();
             token = PhpipamClient.acquireSessionToken(rBaseUrl, rAppId, rUsername, rPassword, rInsecureTls);
-            isAppToken = false;
         }
 
-        return new PhpipamClient(rBaseUrl, rAppId, token, isAppToken, rInsecureTls);
+        return new PhpipamClient(rBaseUrl, rAppId, token, rInsecureTls);
     }
 }
