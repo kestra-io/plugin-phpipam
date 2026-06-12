@@ -89,6 +89,12 @@ public class PhpipamClient {
                 .build();
 
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            int status = response.statusCode();
+            if (status < 200 || status >= 300) {
+                throw new PhpipamApiException(status, "Failed to acquire session token: "
+                    + "unexpected HTTP status " + status + " from " + prefix);
+            }
+
             var envelope = MAPPER.readValue(response.body(),
                 new TypeReference<PhpipamEnvelope<Map<String, Object>>>() {});
 
