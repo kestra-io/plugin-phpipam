@@ -12,12 +12,19 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 
 /**
  * Thin HTTP wrapper for the phpIPAM REST API.
+ * <p>
+ * Uses {@code java.net.http.HttpClient} instead of Kestra's internal HTTP client because
+ * self-hosted phpIPAM instances commonly use self-signed TLS certificates, and the trust-all
+ * SSL context option requires direct access to the {@link SSLContext} at client construction
+ * time — something the Kestra internal client does not expose.
  * <p>
  * Responsibilities:
  * <ul>
@@ -36,6 +43,7 @@ public class PhpipamClient {
     private final HttpClient httpClient;
     private final String basePrefix;
     private final String resolvedToken;
+    private final boolean isAppToken;
 
     /**
      * @param baseUrl     root URL of the phpIPAM instance, e.g. {@code https://ipam.example.com}
@@ -49,8 +57,10 @@ public class PhpipamClient {
                          boolean isAppToken, boolean insecureTls) throws Exception {
         this.basePrefix = stripTrailingSlash(baseUrl) + "/api/" + appId;
         this.resolvedToken = token;
+        this.isAppToken = isAppToken;
 
-        HttpClient.Builder builder = HttpClient.newBuilder();
+        var builder = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(30));
         if (insecureTls) {
             builder.sslContext(trustAllSslContext());
         }
@@ -65,40 +75,39 @@ public class PhpipamClient {
                                              String username, String password,
                                              boolean insecureTls) throws Exception {
         var prefix = stripTrailingSlash(baseUrl) + "/api/" + appId + "/user/";
-        var credentials = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+        var credentials = Base64.getEncoder().encodeToString(
+            (username + ":" + password).getBytes(StandardCharsets.UTF_8));
 
-        HttpClient.Builder builder = HttpClient.newBuilder();
+        var builder = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(30));
         if (insecureTls) {
             builder.sslContext(trustAllSslContext());
         }
-        var client = builder.build();
 
-        var request = HttpRequest.newBuilder(URI.create(prefix))
-            .POST(HttpRequest.BodyPublishers.noBody())
-            .header("Authorization", "Basic " + credentials)
-            .header("Content-Type", "application/json")
-            .build();
+        try (var client = builder.build()) {
+            var request = HttpRequest.newBuilder(URI.create(prefix))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .header("Authorization", "Basic " + credentials)
+                .header("Content-Type", "application/json")
+                .build();
 
-        var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        var envelope = MAPPER.readValue(response.body(),
-            new TypeReference<PhpipamEnvelope<Map<String, Object>>>() {});
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            var envelope = MAPPER.readValue(response.body(),
+                new TypeReference<PhpipamEnvelope<Map<String, Object>>>() {});
 
-        if (!envelope.isSuccess()) {
-            throw new PhpipamApiException(envelope.getCode(),
-                "Failed to acquire session token: " + envelope.getMessage());
+            if (!envelope.isSuccess()) {
+                throw new PhpipamApiException(envelope.getCode(),
+                    "Failed to acquire session token: " + envelope.getMessage());
+            }
+
+            var data = envelope.getData();
+            var token = data.get("token");
+            if (token == null) {
+                throw new PhpipamApiException(200, "Session token missing from login response");
+            }
+            return token.toString();
         }
-
-        var data = envelope.getData();
-        var token = data.get("token");
-        if (token == null) {
-            throw new PhpipamApiException(200, "Session token missing from login response");
-        }
-        return token.toString();
     }
-
-    // -------------------------------------------------------------------------
-    // HTTP helpers
-    // -------------------------------------------------------------------------
 
     public <T> T get(String path, TypeReference<PhpipamEnvelope<T>> type) throws Exception {
         var request = baseRequest(path).GET().build();
@@ -140,7 +149,6 @@ public class PhpipamClient {
         if (response.statusCode() == 404) {
             throw new PhpipamApiException(404, "Resource not found at " + path);
         }
-        // DELETE returns envelope without data; just check success
         var envelope = MAPPER.readValue(response.body(),
             new TypeReference<PhpipamEnvelope<Object>>() {});
         if (!envelope.isSuccess()) {
@@ -148,17 +156,15 @@ public class PhpipamClient {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
     private HttpRequest.Builder baseRequest(String path) {
         var uri = URI.create(basePrefix + "/" + stripLeadingSlash(path));
         var builder = HttpRequest.newBuilder(uri)
             .header("Content-Type", "application/json");
-        // phpIPAM accepts either X-App-Token (static) or Token (session)
-        builder.header("X-App-Token", resolvedToken);
-        builder.header("Token", resolvedToken);
+        if (isAppToken) {
+            builder.header("X-App-Token", resolvedToken);
+        } else {
+            builder.header("Token", resolvedToken);
+        }
         return builder;
     }
 
@@ -173,7 +179,6 @@ public class PhpipamClient {
         int status = response.statusCode();
 
         if (status == 404) {
-            // Distinguish a true 404 from an empty result list
             throw new PhpipamApiException(404, "Resource not found: " + request.uri().getPath());
         }
         if (status < 200 || status >= 300) {

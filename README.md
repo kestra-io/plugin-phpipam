@@ -41,14 +41,15 @@ Kestra plugin for [phpIPAM](https://phpipam.net/), the open-source IP Address Ma
 
 ## What
 
-Tasks and triggers under `io.kestra.plugin.phpipam.ipam` for managing:
+Tasks and triggers grouped by resource type under `io.kestra.plugin.phpipam.ipam.*`:
 
-- **Sections** — list, get, create, update, delete
-- **Subnets** — list, get, create, update, delete; search by CIDR; get first free child subnet
-- **Addresses** — list, get, create, update, delete; get first free address in a subnet
-- **VLANs** — list, get, create, update, delete
-- **VRFs** — list, get, create, update, delete
-- **Triggers** — `AddressCreatedTrigger`: fires an execution whenever a new IP address is detected in a subnet
+| Package | Tasks |
+|---|---|
+| `ipam.section` | `List`, `Get`, `Create`, `Update`, `Delete` |
+| `ipam.subnet` | `List`, `Get`, `Create`, `Update`, `Delete`, `Search`, `FirstFree` |
+| `ipam.address` | `List`, `Get`, `Create`, `Update`, `Delete`, `FirstFree`, `NewAddressTrigger` |
+| `ipam.vlan` | `List`, `Get`, `Create`, `Update`, `Delete` |
+| `ipam.vrf` | `List`, `Get`, `Create`, `Update`, `Delete` |
 
 ## Authentication
 
@@ -68,7 +69,7 @@ id: allocate_next_ip
 namespace: company.team
 tasks:
   - id: get_free_ip
-    type: io.kestra.plugin.phpipam.ipam.AddressFirstFree
+    type: io.kestra.plugin.phpipam.ipam.address.FirstFree
     baseUrl: "https://ipam.example.com"
     appId: myapp
     auth:
@@ -76,7 +77,7 @@ tasks:
     subnetId: "10"
 
   - id: register_ip
-    type: io.kestra.plugin.phpipam.ipam.AddressCreate
+    type: io.kestra.plugin.phpipam.ipam.address.Create
     baseUrl: "https://ipam.example.com"
     appId: myapp
     auth:

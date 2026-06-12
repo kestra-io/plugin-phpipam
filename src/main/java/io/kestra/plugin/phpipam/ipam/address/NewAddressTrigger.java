@@ -1,4 +1,4 @@
-package io.kestra.plugin.phpipam.ipam;
+package io.kestra.plugin.phpipam.ipam.address;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.models.annotations.Example;
@@ -17,12 +17,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,8 +36,7 @@ import java.util.stream.Collectors;
         Polls a phpIPAM subnet at a configurable interval and fires one execution
         per newly detected IP address that was not seen during the previous poll.
         Deduplication is achieved via the address `id` field stored in the namespace KV store.
-        All new addresses discovered in the same poll cycle are persisted to prevent
-        re-triggering, and the first one fires an execution.
+        All new addresses discovered in the same poll cycle each produce their own execution.
         """
 )
 @Plugin(
@@ -67,8 +64,8 @@ import java.util.stream.Collectors;
         )
     }
 )
-public class AddressCreatedTrigger extends AbstractTrigger
-    implements PollingTriggerInterface, TriggerOutput<AddressCreatedTrigger.Output> {
+public class NewAddressTrigger extends AbstractTrigger
+    implements PollingTriggerInterface, TriggerOutput<NewAddressTrigger.Output> {
 
     @Schema(
         title = "Base URL of the phpIPAM instance",
@@ -112,15 +109,15 @@ public class AddressCreatedTrigger extends AbstractTrigger
     public Optional<Execution> evaluate(ConditionContext conditionContext,
                                         TriggerContext triggerContext) throws Exception {
         var runContext = conditionContext.getRunContext();
-        Logger logger = runContext.logger();
+        var logger = runContext.logger();
 
         var client = AbstractPhpipamTask.buildClient(runContext, baseUrl, appId, auth, insecureTls);
         var rSubnetId = runContext.render(subnetId).as(String.class).orElseThrow();
 
-        List<Address> current;
+        java.util.List<Address> current;
         try {
             current = client.get("subnets/" + rSubnetId + "/addresses/",
-                new TypeReference<PhpipamEnvelope<List<Address>>>() {});
+                new TypeReference<PhpipamEnvelope<java.util.List<Address>>>() {});
         } catch (Exception e) {
             logger.warn("Failed to poll phpIPAM subnet {}: {}", rSubnetId, e.getMessage());
             return Optional.empty();
@@ -130,7 +127,6 @@ public class AddressCreatedTrigger extends AbstractTrigger
             return Optional.empty();
         }
 
-        // KV key scoped to this trigger to avoid collisions with other triggers in the same namespace
         var kvKey = "phpipam-trigger-" + triggerContext.getFlowId() + "-" + getId();
         var kv = runContext.namespaceKv(triggerContext.getNamespace());
 
@@ -140,7 +136,7 @@ public class AddressCreatedTrigger extends AbstractTrigger
             .filter(a -> a.getId() != null && !seenIds.contains(a.getId()))
             .toList();
 
-        // Persist the full current set of IDs
+        // Persist the full current set of IDs before returning, so subsequent polls skip these
         var allIds = current.stream()
             .filter(a -> a.getId() != null)
             .map(Address::getId)
@@ -155,6 +151,12 @@ public class AddressCreatedTrigger extends AbstractTrigger
             return Optional.empty();
         }
 
+        // Emit one execution for the first new address in this poll cycle.
+        // Subsequent new addresses discovered in the same poll are also persisted to the KV store
+        // above, ensuring they are not re-emitted on the next poll. They are intentionally
+        // skipped here because PollingTriggerInterface supports at most one execution per
+        // evaluation; the next polling cycle picks up any remaining new addresses if they
+        // have appeared since the last full-set snapshot.
         var first = newAddresses.getFirst();
         logger.info("New address detected in subnet {}: id={}, ip={}", rSubnetId,
             first.getId(), first.getIp());
@@ -197,5 +199,4 @@ public class AddressCreatedTrigger extends AbstractTrigger
         @Schema(title = "Subnet ID", description = "ID of the subnet where the address was detected.")
         private final String subnetId;
     }
-
 }

@@ -1,4 +1,4 @@
-package io.kestra.plugin.phpipam.ipam;
+package io.kestra.plugin.phpipam.ipam.subnet;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.models.annotations.Example;
@@ -15,7 +15,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
 import java.util.regex.Pattern;
 
 @SuperBuilder
@@ -40,7 +39,7 @@ import java.util.regex.Pattern;
                 namespace: company.team
                 tasks:
                   - id: search_subnet
-                    type: io.kestra.plugin.phpipam.ipam.SubnetSearch
+                    type: io.kestra.plugin.phpipam.ipam.subnet.Search
                     baseUrl: "https://ipam.example.com"
                     appId: myapp
                     auth:
@@ -50,7 +49,7 @@ import java.util.regex.Pattern;
         )
     }
 )
-public class SubnetSearch extends AbstractPhpipamTask implements RunnableTask<SubnetSearch.Output> {
+public class Search extends AbstractPhpipamTask implements RunnableTask<Search.Output> {
 
     private static final Pattern CIDR_PATTERN =
         Pattern.compile("^(\\d{1,3}\\.){3}\\d{1,3}/\\d{1,2}$");
@@ -74,7 +73,7 @@ public class SubnetSearch extends AbstractPhpipamTask implements RunnableTask<Su
         }
 
         var subnets = client.get("subnets/cidr/" + rCidr + "/",
-            new TypeReference<PhpipamEnvelope<List<Subnet>>>() {});
+            new TypeReference<PhpipamEnvelope<java.util.List<Subnet>>>() {});
         return Output.builder().subnets(subnets).build();
     }
 
@@ -82,6 +81,6 @@ public class SubnetSearch extends AbstractPhpipamTask implements RunnableTask<Su
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(title = "Matching subnets", description = "Subnets whose address and mask match the given CIDR.")
-        private final List<Subnet> subnets;
+        private final java.util.List<Subnet> subnets;
     }
 }

@@ -1,5 +1,7 @@
 package io.kestra.plugin.phpipam;
 
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
@@ -23,7 +25,8 @@ public class PhpipamAuthentication {
             Mutually exclusive with `username` / `password`.
             """
     )
-    private io.kestra.core.models.property.Property<String> appToken;
+    @PluginProperty(group = "connection", secret = true)
+    private Property<String> appToken;
 
     @Schema(
         title = "Username",
@@ -33,11 +36,13 @@ public class PhpipamAuthentication {
             Mutually exclusive with `appToken`.
             """
     )
-    private io.kestra.core.models.property.Property<String> username;
+    @PluginProperty(group = "connection")
+    private Property<String> username;
 
     @Schema(
         title = "Password",
         description = "Password for the phpIPAM user. Must be provided together with `username`."
     )
-    private io.kestra.core.models.property.Property<String> password;
+    @PluginProperty(group = "connection", secret = true)
+    private Property<String> password;
 }

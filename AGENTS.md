@@ -2,7 +2,7 @@
 
 ## What
 
-- Provides plugin components under `io.kestra.plugin.phpipam` and `io.kestra.plugin.phpipam.ipam`.
+- Provides plugin components under `io.kestra.plugin.phpipam` and sub-packages.
 - IPAM resource tasks and triggers for phpIPAM, the open-source IP Address Management application.
 
 ## Why
@@ -17,7 +17,11 @@
 Single-module plugin. Key packages:
 
 - `io.kestra.plugin.phpipam` — connection/auth abstraction (`AbstractPhpipamTask`, `PhpipamAuthentication`, `PhpipamClient`, `PhpipamEnvelope`, `PhpipamApiException`).
-- `io.kestra.plugin.phpipam.ipam` — all resource tasks and the polling trigger.
+- `io.kestra.plugin.phpipam.ipam.section` — section tasks.
+- `io.kestra.plugin.phpipam.ipam.subnet` — subnet tasks.
+- `io.kestra.plugin.phpipam.ipam.address` — address tasks and trigger.
+- `io.kestra.plugin.phpipam.ipam.vlan` — VLAN tasks.
+- `io.kestra.plugin.phpipam.ipam.vrf` — VRF tasks.
 - `io.kestra.plugin.phpipam.ipam.model` — JSON model classes (`Section`, `Subnet`, `Address`, `Vlan`, `Vrf`).
 
 ### Key Plugin Classes
@@ -27,46 +31,23 @@ Single-module plugin. Key packages:
 - `io.kestra.plugin.phpipam.PhpipamClient` — HTTP wrapper; prepends `/api/{appId}/`; unwraps JSON envelope; handles 404 and `success:false`.
 - `io.kestra.plugin.phpipam.PhpipamAuthentication` — holds `appToken` OR `username`+`password`.
 
-**Sections**
-- `io.kestra.plugin.phpipam.ipam.SectionList`
-- `io.kestra.plugin.phpipam.ipam.SectionGet`
-- `io.kestra.plugin.phpipam.ipam.SectionCreate`
-- `io.kestra.plugin.phpipam.ipam.SectionUpdate`
-- `io.kestra.plugin.phpipam.ipam.SectionDelete`
+**Sections** (`io.kestra.plugin.phpipam.ipam.section`)
+- `List`, `Get`, `Create`, `Update`, `Delete`
 
-**Subnets**
-- `io.kestra.plugin.phpipam.ipam.SubnetList`
-- `io.kestra.plugin.phpipam.ipam.SubnetGet`
-- `io.kestra.plugin.phpipam.ipam.SubnetCreate`
-- `io.kestra.plugin.phpipam.ipam.SubnetUpdate`
-- `io.kestra.plugin.phpipam.ipam.SubnetDelete`
-- `io.kestra.plugin.phpipam.ipam.SubnetSearch` — search by CIDR
-- `io.kestra.plugin.phpipam.ipam.SubnetFirstFree` — first free child subnet
+**Subnets** (`io.kestra.plugin.phpipam.ipam.subnet`)
+- `List`, `Get`, `Create`, `Update`, `Delete`, `Search`, `FirstFree`
 
-**Addresses**
-- `io.kestra.plugin.phpipam.ipam.AddressList`
-- `io.kestra.plugin.phpipam.ipam.AddressGet`
-- `io.kestra.plugin.phpipam.ipam.AddressCreate`
-- `io.kestra.plugin.phpipam.ipam.AddressUpdate`
-- `io.kestra.plugin.phpipam.ipam.AddressDelete`
-- `io.kestra.plugin.phpipam.ipam.AddressFirstFree` — first free IP in a subnet
+**Addresses** (`io.kestra.plugin.phpipam.ipam.address`)
+- `List`, `Get`, `Create`, `Update`, `Delete`, `FirstFree`
 
-**VLANs**
-- `io.kestra.plugin.phpipam.ipam.VlanList`
-- `io.kestra.plugin.phpipam.ipam.VlanGet`
-- `io.kestra.plugin.phpipam.ipam.VlanCreate`
-- `io.kestra.plugin.phpipam.ipam.VlanUpdate`
-- `io.kestra.plugin.phpipam.ipam.VlanDelete`
+**Triggers** (`io.kestra.plugin.phpipam.ipam.address`)
+- `NewAddressTrigger` — polls a subnet at a configurable interval; fires one execution per newly detected address (dedup via KV store).
 
-**VRFs**
-- `io.kestra.plugin.phpipam.ipam.VrfList`
-- `io.kestra.plugin.phpipam.ipam.VrfGet`
-- `io.kestra.plugin.phpipam.ipam.VrfCreate`
-- `io.kestra.plugin.phpipam.ipam.VrfUpdate`
-- `io.kestra.plugin.phpipam.ipam.VrfDelete`
+**VLANs** (`io.kestra.plugin.phpipam.ipam.vlan`)
+- `List`, `Get`, `Create`, `Update`, `Delete`
 
-**Triggers**
-- `io.kestra.plugin.phpipam.ipam.AddressCreatedTrigger` — polls a subnet at a configurable interval; fires on newly detected addresses (dedup via trigger state).
+**VRFs** (`io.kestra.plugin.phpipam.ipam.vrf`)
+- `List`, `Get`, `Create`, `Update`, `Delete`
 
 ### Project Structure
 
@@ -81,22 +62,21 @@ plugin-phpipam/
 │   ├── package-info.java
 │   └── ipam/
 │       ├── model/         (Section, Subnet, Address, Vlan, Vrf)
-│       ├── Section*.java
-│       ├── Subnet*.java
-│       ├── Address*.java
-│       ├── Vlan*.java
-│       ├── Vrf*.java
-│       ├── AddressCreatedTrigger.java
+│       ├── section/       (List, Get, Create, Update, Delete)
+│       ├── subnet/        (List, Get, Create, Update, Delete, Search, FirstFree)
+│       ├── address/       (List, Get, Create, Update, Delete, FirstFree, NewAddressTrigger)
+│       ├── vlan/          (List, Get, Create, Update, Delete)
+│       ├── vrf/           (List, Get, Create, Update, Delete)
 │       └── package-info.java
 ├── src/test/java/io/kestra/plugin/phpipam/
 │   ├── WireMockSupport.java
 │   ├── PhpipamAuthTest.java
 │   └── ipam/
-│       ├── SectionTasksTest.java
-│       ├── SubnetTasksTest.java
-│       ├── AddressTasksTest.java
-│       ├── VlanTasksTest.java
-│       └── VrfTasksTest.java
+│       ├── section/SectionTasksTest.java
+│       ├── subnet/SubnetTasksTest.java
+│       ├── address/AddressTasksTest.java
+│       ├── vlan/VlanTasksTest.java
+│       └── vrf/VrfTasksTest.java
 ├── build.gradle
 └── README.md
 ```
@@ -106,6 +86,8 @@ plugin-phpipam/
 - Base the wording on the implemented packages and classes, not on template README text.
 - `version` is a reserved property name in Kestra — never use it in tasks.
 - phpIPAM returns `success:false` on HTTP 200 for failures; `PhpipamClient` maps these to `PhpipamApiException`.
+- Task classes named `List` must use `java.util.List` fully qualified in the same file to avoid ambiguity.
+- `PhpipamClient` intentionally uses `java.net.http.HttpClient` (not the Kestra internal HTTP client) to support trust-all TLS for self-signed certificates on self-hosted instances.
 
 ## References
 

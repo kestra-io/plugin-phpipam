@@ -69,9 +69,9 @@ class PhpipamAuthTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody(WireMockSupport.successBody("{\"token\":\"session-tok\",\"expires\":\"2099-01-01\"}"))));
 
-        // Stub the actual API call requiring the session token
+        // Stub the actual API call requiring the session token (sent as Token header, not X-App-Token)
         wireMock.stubFor(get(urlEqualTo("/api/myapp/sections/"))
-            .withHeader("X-App-Token", equalTo("session-tok"))
+            .withHeader("Token", equalTo("session-tok"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBody(WireMockSupport.successListBody("[{\"id\":\"2\",\"name\":\"Dev\"}]"))));
