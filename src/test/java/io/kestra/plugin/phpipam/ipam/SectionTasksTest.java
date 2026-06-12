@@ -99,8 +99,9 @@ class SectionTasksTest {
     void sectionCreate_returns_new_id() throws Exception {
         wireMock.stubFor(post(urlEqualTo("/api/myapp/sections/"))
             .willReturn(aResponse()
+                .withStatus(201)
                 .withHeader("Content-Type", "application/json")
-                .withBody(WireMockSupport.successBody("\"3\""))));
+                .withBody(WireMockSupport.createBody("3", "\"Development\""))));
 
         var task = SectionCreate.builder()
             .id(UUID.randomUUID().toString())

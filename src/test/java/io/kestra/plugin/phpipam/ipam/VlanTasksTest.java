@@ -77,8 +77,9 @@ class VlanTasksTest {
     void vlanCreate_returns_new_id() throws Exception {
         wireMock.stubFor(post(urlEqualTo("/api/myapp/vlan/"))
             .willReturn(aResponse()
+                .withStatus(201)
                 .withHeader("Content-Type", "application/json")
-                .withBody(WireMockSupport.successBody("\"7\""))));
+                .withBody(WireMockSupport.createBody("7", "\"MGMT\""))));
 
         var task = VlanCreate.builder()
             .id(UUID.randomUUID().toString())

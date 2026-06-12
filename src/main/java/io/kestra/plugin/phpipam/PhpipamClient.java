@@ -113,6 +113,19 @@ public class PhpipamClient {
         return send(request, type);
     }
 
+    /**
+     * POST for resource creation: returns the top-level {@code id} from the response envelope.
+     * phpIPAM places the new resource's numeric id there on HTTP 201, not inside {@code data}.
+     */
+    public String postCreate(String path, Object body) throws Exception {
+        var json = MAPPER.writeValueAsString(body);
+        var request = baseRequest(path)
+            .POST(HttpRequest.BodyPublishers.ofString(json))
+            .build();
+        var envelope = sendRaw(request, new TypeReference<PhpipamEnvelope<Object>>() {});
+        return envelope.getId();
+    }
+
     public <T> T patch(String path, Object body, TypeReference<PhpipamEnvelope<T>> type) throws Exception {
         var json = MAPPER.writeValueAsString(body);
         var request = baseRequest(path)
@@ -151,6 +164,11 @@ public class PhpipamClient {
 
     private <T> T send(HttpRequest request,
                        TypeReference<PhpipamEnvelope<T>> type) throws Exception {
+        return sendRaw(request, type).getData();
+    }
+
+    private <T> PhpipamEnvelope<T> sendRaw(HttpRequest request,
+                                            TypeReference<PhpipamEnvelope<T>> type) throws Exception {
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         int status = response.statusCode();
 
@@ -167,7 +185,7 @@ public class PhpipamClient {
         if (!envelope.isSuccess()) {
             throw new PhpipamApiException(envelope.getCode(), envelope.getMessage());
         }
-        return envelope.getData();
+        return envelope;
     }
 
     private static String stripTrailingSlash(String s) {

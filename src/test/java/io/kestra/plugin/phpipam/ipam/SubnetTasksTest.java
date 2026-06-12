@@ -106,8 +106,9 @@ class SubnetTasksTest {
     void subnetCreate_returns_new_id() throws Exception {
         wireMock.stubFor(post(urlEqualTo("/api/myapp/subnets/"))
             .willReturn(aResponse()
+                .withStatus(201)
                 .withHeader("Content-Type", "application/json")
-                .withBody(WireMockSupport.successBody("\"42\""))));
+                .withBody(WireMockSupport.createBody("8", "\"192.168.1.0/24\""))));
 
         var task = SubnetCreate.builder()
             .id(UUID.randomUUID().toString())
@@ -123,7 +124,7 @@ class SubnetTasksTest {
 
         var output = task.run(runContext());
 
-        assertThat(output.getId(), is("42"));
+        assertThat(output.getId(), is("8"));
     }
 
     @Test

@@ -34,6 +34,17 @@ public final class WireMockSupport {
         return successBody(dataJson);
     }
 
+    /**
+     * JSON envelope for a creation response (HTTP 201).
+     * phpIPAM returns the new resource's numeric id in the top-level {@code "id"} field,
+     * while {@code data} holds a summary value (e.g. CIDR for subnets, the name, etc.).
+     */
+    public static String createBody(String id, String dataJson) {
+        return """
+            {"code":201,"success":true,"message":"Record created","id":"%s","data":%s}
+            """.formatted(id, dataJson).strip();
+    }
+
     /** JSON envelope representing an API-level failure (success:false). */
     public static String failureBody(int code, String message) {
         return """

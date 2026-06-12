@@ -78,8 +78,9 @@ class AddressTasksTest {
     void addressCreate_returns_new_id() throws Exception {
         wireMock.stubFor(post(urlEqualTo("/api/myapp/addresses/"))
             .willReturn(aResponse()
+                .withStatus(201)
                 .withHeader("Content-Type", "application/json")
-                .withBody(WireMockSupport.successBody("\"99\""))));
+                .withBody(WireMockSupport.createBody("99", "\"10.0.0.50\""))));
 
         var task = AddressCreate.builder()
             .id(UUID.randomUUID().toString())

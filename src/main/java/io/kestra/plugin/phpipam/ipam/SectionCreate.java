@@ -1,6 +1,5 @@
 package io.kestra.plugin.phpipam.ipam;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -8,14 +7,12 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.phpipam.AbstractPhpipamTask;
-import io.kestra.plugin.phpipam.PhpipamEnvelope;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.HashMap;
-import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -70,8 +67,7 @@ public class SectionCreate extends AbstractPhpipamTask implements RunnableTask<S
         runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
         runContext.render(masterSection).as(String.class).ifPresent(v -> body.put("masterSection", v));
 
-        var id = client.post("sections/", body,
-            new TypeReference<PhpipamEnvelope<String>>() {});
+        var id = client.postCreate("sections/", body);
         return Output.builder().id(id).build();
     }
 
