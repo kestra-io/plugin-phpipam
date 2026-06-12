@@ -21,7 +21,7 @@ public class PhpipamAuthentication {
         title = "Static App token",
         description = """
             A token generated in the phpIPAM administration panel under Administration → API.
-            This is set as the `X-App-Token` request header.
+            Sent to phpIPAM via the `token` request header.
             Mutually exclusive with `username` / `password`.
             """
     )
