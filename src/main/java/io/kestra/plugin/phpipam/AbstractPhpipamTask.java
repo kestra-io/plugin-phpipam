@@ -9,10 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-/**
- * Base class for all phpIPAM tasks.
- * Handles connection properties, authentication resolution, and {@link PhpipamClient} creation.
- */
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
@@ -62,16 +58,10 @@ public abstract class AbstractPhpipamTask extends Task {
     @PluginProperty(group = "connection")
     private Property<Boolean> insecureTls = Property.ofValue(false);
 
-    /**
-     * Resolves credentials and builds a ready-to-use {@link PhpipamClient} for the current run.
-     */
     public PhpipamClient buildClient(RunContext runContext) throws Exception {
         return buildClient(runContext, baseUrl, appId, auth, insecureTls);
     }
 
-    /**
-     * Static helper so triggers can resolve a client without inheriting from this class.
-     */
     public static PhpipamClient buildClient(RunContext runContext,
                                             Property<String> baseUrl,
                                             Property<String> appId,

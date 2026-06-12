@@ -21,6 +21,7 @@ import lombok.experimental.SuperBuilder;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -136,28 +137,20 @@ public class NewAddressTrigger extends AbstractTrigger
             .filter(a -> a.getId() != null && !seenIds.contains(a.getId()))
             .toList();
 
-        // Persist the full current set of IDs before returning, so subsequent polls skip these
-        var allIds = current.stream()
-            .filter(a -> a.getId() != null)
-            .map(Address::getId)
-            .collect(Collectors.joining(","));
+        if (newAddresses.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Emit one execution for the first new address. Persist only seenIds ∪ { first.getId() }
+        // so the remaining new addresses stay absent from the seen-set and each fires on a
+        // subsequent poll — one execution per evaluation, none silently dropped.
+        var first = newAddresses.getFirst();
+        var allIds = String.join(",", nextSeenIds(seenIds, first.getId()));
         try {
             kv.put(kvKey, new KVValueAndMetadata(new KVMetadata(null, (Instant) null), allIds));
         } catch (Exception e) {
             logger.warn("Failed to persist trigger state for key {}: {}", kvKey, e.getMessage());
         }
-
-        if (newAddresses.isEmpty()) {
-            return Optional.empty();
-        }
-
-        // Emit one execution for the first new address in this poll cycle.
-        // Subsequent new addresses discovered in the same poll are also persisted to the KV store
-        // above, ensuring they are not re-emitted on the next poll. They are intentionally
-        // skipped here because PollingTriggerInterface supports at most one execution per
-        // evaluation; the next polling cycle picks up any remaining new addresses if they
-        // have appeared since the last full-set snapshot.
-        var first = newAddresses.getFirst();
         logger.info("New address detected in subnet {}: id={}, ip={}", rSubnetId,
             first.getId(), first.getIp());
 
@@ -169,6 +162,12 @@ public class NewAddressTrigger extends AbstractTrigger
             .build();
 
         return Optional.of(TriggerService.generateExecution(this, conditionContext, triggerContext, output));
+    }
+
+    static Set<String> nextSeenIds(Set<String> previouslySeen, String emittedId) {
+        var next = new HashSet<>(previouslySeen);
+        next.add(emittedId);
+        return Set.copyOf(next);
     }
 
     private static Set<String> loadSeenIds(io.kestra.core.storages.kv.KVStore kv, String kvKey) {

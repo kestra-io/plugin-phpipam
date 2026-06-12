@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Base64;
@@ -208,7 +209,7 @@ public class PhpipamClient {
             public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[0]; }
         };
         var ctx = SSLContext.getInstance("TLS");
-        ctx.init(null, new TrustManager[]{trustAll}, new java.security.SecureRandom());
+        ctx.init(null, new TrustManager[]{trustAll}, new SecureRandom());
         return ctx;
     }
 }
