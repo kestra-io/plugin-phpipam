@@ -1,0 +1,8 @@
+group: io.kestra.plugin.phpipam.ipam
+name: "ipam"
+title: "phpIPAM IPAM"
+description: "Tasks for managing IPAM resources (sections, subnets, IP addresses, VLANs, VRFs) via the phpIPAM REST API."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

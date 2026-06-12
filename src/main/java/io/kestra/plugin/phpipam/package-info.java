@@ -1,7 +1,7 @@
 @PluginSubGroup(
     title = "PhpIPAM",
-    description = "PhpIPAM plugin for Kestra",
-    categories = PluginSubGroup.PluginCategory.DATA
+    description = "Interact with a self-hosted phpIPAM instance to manage IP address resources.",
+    categories = PluginSubGroup.PluginCategory.INFRASTRUCTURE
 )
 package io.kestra.plugin.phpipam;
 

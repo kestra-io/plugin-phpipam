@@ -96,6 +96,9 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
     testImplementation "org.hamcrest:hamcrest"
     testImplementation "org.hamcrest:hamcrest-library"
+
+    // WireMock for mocking phpIPAM HTTP API
+    testImplementation "org.wiremock:wiremock-jetty12:3.13.0"
 }
 
 /**********************************************************************************************************************\
