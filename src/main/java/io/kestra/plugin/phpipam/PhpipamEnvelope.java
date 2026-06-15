@@ -2,6 +2,7 @@ package io.kestra.plugin.phpipam;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,8 +30,14 @@ public class PhpipamEnvelope<T> {
     @JsonProperty("message")
     private String message;
 
-    @JsonProperty("id")
+    // phpIPAM may return the id as a JSON integer (e.g. {"id": 99}) or a string.
+    // The explicit setter coerces both forms to String so callers always get a String.
     private String id;
+
+    @JsonSetter("id")
+    public void setId(Object id) {
+        this.id = id == null ? null : String.valueOf(id);
+    }
 
     @JsonProperty("data")
     private T data;

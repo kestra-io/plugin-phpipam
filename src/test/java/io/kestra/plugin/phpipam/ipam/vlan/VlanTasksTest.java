@@ -71,6 +71,7 @@ class VlanTasksTest {
         assertThat(output.getVlans(), hasSize(1));
         assertThat(output.getVlans().getFirst().getName(), is("MGMT"));
         assertThat(output.getVlans().getFirst().getNumber(), is("100"));
+        assertThat(output.getTotal(), is(1));
     }
 
     @Test

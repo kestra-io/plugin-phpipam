@@ -51,8 +51,9 @@ import java.util.regex.Pattern;
 )
 public class Search extends AbstractPhpipamTask implements RunnableTask<Search.Output> {
 
-    private static final Pattern CIDR_PATTERN =
-        Pattern.compile("^(\\d{1,3}\\.){3}\\d{1,3}/\\d{1,2}$");
+    private static final Pattern CIDR_PATTERN = Pattern.compile(
+        "^((?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}" +
+        "(?:25[0-5]|2[0-4]\\d|[01]?\\d\\d?)/(\\d|[12]\\d|3[012])$");
 
     @Schema(
         title = "CIDR to search",
@@ -64,7 +65,6 @@ public class Search extends AbstractPhpipamTask implements RunnableTask<Search.O
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
         var rCidr = runContext.render(cidr).as(String.class).orElseThrow();
 
         if (!CIDR_PATTERN.matcher(rCidr).matches()) {
@@ -72,9 +72,11 @@ public class Search extends AbstractPhpipamTask implements RunnableTask<Search.O
                 + "'. Expected IPv4 CIDR notation, e.g. 192.168.1.0/24");
         }
 
-        var subnets = client.get("subnets/cidr/" + rCidr + "/",
-            new TypeReference<PhpipamEnvelope<java.util.List<Subnet>>>() {});
-        return Output.builder().subnets(subnets).build();
+        try (var client = buildClient(runContext)) {
+            var subnets = client.get("subnets/cidr/" + rCidr + "/",
+                new TypeReference<PhpipamEnvelope<java.util.List<Subnet>>>() {});
+            return Output.builder().subnets(subnets).build();
+        }
     }
 
     @Builder

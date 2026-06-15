@@ -51,9 +51,10 @@ public class Delete extends AbstractPhpipamTask implements RunnableTask<VoidOutp
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var rId = runContext.render(sectionId).as(String.class).orElseThrow();
-        client.delete("sections/" + rId + "/");
-        return null;
+        try (var client = buildClient(runContext)) {
+            var rId = runContext.render(sectionId).as(String.class).orElseThrow();
+            client.delete("sections/" + rId + "/");
+            return new VoidOutput();
+        }
     }
 }

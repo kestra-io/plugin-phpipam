@@ -73,6 +73,7 @@ class SubnetTasksTest {
         assertThat(output.getSubnets(), hasSize(1));
         assertThat(output.getSubnets().getFirst().getId(), is("10"));
         assertThat(output.getSubnets().getFirst().getSubnet(), is("10.0.0.0"));
+        assertThat(output.getTotal(), is(1));
     }
 
     @Test

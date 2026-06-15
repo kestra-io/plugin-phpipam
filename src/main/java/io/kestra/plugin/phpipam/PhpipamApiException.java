@@ -6,6 +6,8 @@ package io.kestra.plugin.phpipam;
  */
 public class PhpipamApiException extends RuntimeException {
 
+    private static final long serialVersionUID = 1L;
+
     private final int httpCode;
 
     public PhpipamApiException(int httpCode, String message) {

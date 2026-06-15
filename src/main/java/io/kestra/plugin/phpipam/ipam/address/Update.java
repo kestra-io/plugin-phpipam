@@ -68,16 +68,17 @@ public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutp
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var rId = runContext.render(addressId).as(String.class).orElseThrow();
-        var body = new HashMap<String, Object>();
-        body.put("id", rId);
-        runContext.render(hostname).as(String.class).ifPresent(v -> body.put("hostname", v));
-        runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
-        runContext.render(owner).as(String.class).ifPresent(v -> body.put("owner", v));
+        try (var client = buildClient(runContext)) {
+            var rId = runContext.render(addressId).as(String.class).orElseThrow();
+            var body = new HashMap<String, Object>();
+            body.put("id", rId);
+            runContext.render(hostname).as(String.class).ifPresent(v -> body.put("hostname", v));
+            runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
+            runContext.render(owner).as(String.class).ifPresent(v -> body.put("owner", v));
 
-        client.patch("addresses/" + rId + "/", body,
-            new TypeReference<PhpipamEnvelope<Object>>() {});
-        return null;
+            client.patch("addresses/" + rId + "/", body,
+                new TypeReference<PhpipamEnvelope<Object>>() {});
+            return new VoidOutput();
+        }
     }
 }

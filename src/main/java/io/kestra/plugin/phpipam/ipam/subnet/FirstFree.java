@@ -59,11 +59,12 @@ public class FirstFree extends AbstractPhpipamTask implements RunnableTask<First
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var rId = runContext.render(subnetId).as(String.class).orElseThrow();
-        var cidr = client.get("subnets/" + rId + "/first_subnet/",
-            new TypeReference<PhpipamEnvelope<String>>() {});
-        return Output.builder().cidr(cidr).build();
+        try (var client = buildClient(runContext)) {
+            var rId = runContext.render(subnetId).as(String.class).orElseThrow();
+            var cidr = client.get("subnets/" + rId + "/first_subnet/",
+                new TypeReference<PhpipamEnvelope<String>>() {});
+            return Output.builder().cidr(cidr).build();
+        }
     }
 
     @Builder

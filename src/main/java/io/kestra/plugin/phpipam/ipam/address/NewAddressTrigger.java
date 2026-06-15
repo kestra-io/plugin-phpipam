@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.storages.kv.KVMetadata;
+import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.plugin.phpipam.AbstractPhpipamTask;
 import io.kestra.plugin.phpipam.PhpipamEnvelope;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -112,56 +114,57 @@ public class NewAddressTrigger extends AbstractTrigger
         var runContext = conditionContext.getRunContext();
         var logger = runContext.logger();
 
-        var client = AbstractPhpipamTask.buildClient(runContext, baseUrl, appId, auth, insecureTls);
-        var rSubnetId = runContext.render(subnetId).as(String.class).orElseThrow();
-
         java.util.List<Address> current;
-        try {
-            current = client.get("subnets/" + rSubnetId + "/addresses/",
-                new TypeReference<PhpipamEnvelope<java.util.List<Address>>>() {});
-        } catch (Exception e) {
-            logger.warn("Failed to poll phpIPAM subnet {}: {}", rSubnetId, e.getMessage());
-            return Optional.empty();
+        try (var client = AbstractPhpipamTask.buildClient(runContext, baseUrl, appId, auth, insecureTls)) {
+            var rSubnetId = runContext.render(subnetId).as(String.class).orElseThrow();
+            try {
+                current = client.get("subnets/" + rSubnetId + "/addresses/",
+                    new TypeReference<PhpipamEnvelope<java.util.List<Address>>>() {});
+            } catch (Exception e) {
+                logger.warn("Failed to poll phpIPAM subnet {}: {}", rSubnetId, e.getMessage());
+                return Optional.empty();
+            }
+
+            if (current == null || current.isEmpty()) {
+                return Optional.empty();
+            }
+
+            var tenantPrefix = triggerContext.getTenantId() != null ? triggerContext.getTenantId() + "-" : "";
+            var kvKey = "phpipam-trigger-" + tenantPrefix + triggerContext.getFlowId() + "-" + getId();
+            var kv = runContext.namespaceKv(triggerContext.getNamespace());
+
+            final Set<String> seenIds = loadSeenIds(kv, kvKey, logger);
+
+            var newAddresses = current.stream()
+                .filter(a -> a.getId() != null && !seenIds.contains(a.getId()))
+                .toList();
+
+            if (newAddresses.isEmpty()) {
+                return Optional.empty();
+            }
+
+            // Emit one execution for the first new address. Persist only seenIds ∪ { first.getId() }
+            // so the remaining new addresses stay absent from the seen-set and each fires on a
+            // subsequent poll — one execution per evaluation, none silently dropped.
+            var first = newAddresses.getFirst();
+            var allIds = String.join(",", nextSeenIds(seenIds, first.getId()));
+            try {
+                kv.put(kvKey, new KVValueAndMetadata(new KVMetadata(null, (Instant) null), allIds));
+            } catch (Exception e) {
+                logger.warn("Failed to persist trigger state for key {}: {}", kvKey, e.getMessage());
+            }
+            logger.info("New address detected in subnet {}: id={}, ip={}", rSubnetId,
+                first.getId(), first.getIp());
+
+            var output = Output.builder()
+                .addressId(first.getId())
+                .ip(first.getIp())
+                .hostname(first.getHostname())
+                .subnetId(rSubnetId)
+                .build();
+
+            return Optional.of(TriggerService.generateExecution(this, conditionContext, triggerContext, output));
         }
-
-        if (current == null || current.isEmpty()) {
-            return Optional.empty();
-        }
-
-        var kvKey = "phpipam-trigger-" + triggerContext.getFlowId() + "-" + getId();
-        var kv = runContext.namespaceKv(triggerContext.getNamespace());
-
-        final Set<String> seenIds = loadSeenIds(kv, kvKey);
-
-        var newAddresses = current.stream()
-            .filter(a -> a.getId() != null && !seenIds.contains(a.getId()))
-            .toList();
-
-        if (newAddresses.isEmpty()) {
-            return Optional.empty();
-        }
-
-        // Emit one execution for the first new address. Persist only seenIds ∪ { first.getId() }
-        // so the remaining new addresses stay absent from the seen-set and each fires on a
-        // subsequent poll — one execution per evaluation, none silently dropped.
-        var first = newAddresses.getFirst();
-        var allIds = String.join(",", nextSeenIds(seenIds, first.getId()));
-        try {
-            kv.put(kvKey, new KVValueAndMetadata(new KVMetadata(null, (Instant) null), allIds));
-        } catch (Exception e) {
-            logger.warn("Failed to persist trigger state for key {}: {}", kvKey, e.getMessage());
-        }
-        logger.info("New address detected in subnet {}: id={}, ip={}", rSubnetId,
-            first.getId(), first.getIp());
-
-        var output = Output.builder()
-            .addressId(first.getId())
-            .ip(first.getIp())
-            .hostname(first.getHostname())
-            .subnetId(rSubnetId)
-            .build();
-
-        return Optional.of(TriggerService.generateExecution(this, conditionContext, triggerContext, output));
     }
 
     static Set<String> nextSeenIds(Set<String> previouslySeen, String emittedId) {
@@ -170,7 +173,7 @@ public class NewAddressTrigger extends AbstractTrigger
         return Set.copyOf(next);
     }
 
-    private static Set<String> loadSeenIds(io.kestra.core.storages.kv.KVStore kv, String kvKey) {
+    private static Set<String> loadSeenIds(KVStore kv, String kvKey, Logger logger) {
         try {
             var stored = kv.getValue(kvKey);
             var raw = stored.map(v -> v.value() != null ? v.value().toString() : "").orElse("");
@@ -179,6 +182,8 @@ public class NewAddressTrigger extends AbstractTrigger
                 .filter(s -> !s.isBlank())
                 .collect(Collectors.toUnmodifiableSet());
         } catch (Exception e) {
+            logger.warn("KV store read failed for key {} — all current addresses may re-fire: {}",
+                kvKey, e.getMessage());
             return Set.of();
         }
     }

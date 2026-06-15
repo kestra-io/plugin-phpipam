@@ -77,17 +77,18 @@ public class Create extends AbstractPhpipamTask implements RunnableTask<Create.O
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var body = new HashMap<String, Object>();
-        body.put("subnet", runContext.render(subnet).as(String.class).orElseThrow());
-        body.put("mask", runContext.render(mask).as(String.class).orElseThrow());
-        body.put("sectionId", runContext.render(sectionId).as(String.class).orElseThrow());
-        runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
-        runContext.render(vlanId).as(String.class).ifPresent(v -> body.put("vlanId", v));
-        runContext.render(vrfId).as(String.class).ifPresent(v -> body.put("vrfId", v));
+        try (var client = buildClient(runContext)) {
+            var body = new HashMap<String, Object>();
+            body.put("subnet", runContext.render(subnet).as(String.class).orElseThrow());
+            body.put("mask", runContext.render(mask).as(String.class).orElseThrow());
+            body.put("sectionId", runContext.render(sectionId).as(String.class).orElseThrow());
+            runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
+            runContext.render(vlanId).as(String.class).ifPresent(v -> body.put("vlanId", v));
+            runContext.render(vrfId).as(String.class).ifPresent(v -> body.put("vrfId", v));
 
-        var id = client.postCreate("subnets/", body);
-        return Output.builder().id(id).build();
+            var id = client.postCreate("subnets/", body);
+            return Output.builder().id(id).build();
+        }
     }
 
     @Builder

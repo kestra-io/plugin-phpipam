@@ -71,6 +71,7 @@ class AddressTasksTest {
 
         assertThat(output.getAddresses(), hasSize(1));
         assertThat(output.getAddresses().getFirst().getIp(), is("10.0.0.5"));
+        assertThat(output.getTotal(), is(1));
     }
 
     @Test

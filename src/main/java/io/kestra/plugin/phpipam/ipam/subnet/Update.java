@@ -42,7 +42,7 @@ import java.util.HashMap;
                     auth:
                       appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
                     subnetId: "10"
-                    description: "Updated description"
+                    resourceDescription: "Updated description"
                 """
         )
     }
@@ -68,16 +68,17 @@ public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutp
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var rId = runContext.render(subnetId).as(String.class).orElseThrow();
-        var body = new HashMap<String, Object>();
-        body.put("id", rId);
-        runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
-        runContext.render(vlanId).as(String.class).ifPresent(v -> body.put("vlanId", v));
-        runContext.render(vrfId).as(String.class).ifPresent(v -> body.put("vrfId", v));
+        try (var client = buildClient(runContext)) {
+            var rId = runContext.render(subnetId).as(String.class).orElseThrow();
+            var body = new HashMap<String, Object>();
+            body.put("id", rId);
+            runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
+            runContext.render(vlanId).as(String.class).ifPresent(v -> body.put("vlanId", v));
+            runContext.render(vrfId).as(String.class).ifPresent(v -> body.put("vrfId", v));
 
-        client.patch("subnets/" + rId + "/", body,
-            new TypeReference<PhpipamEnvelope<Object>>() {});
-        return null;
+            client.patch("subnets/" + rId + "/", body,
+                new TypeReference<PhpipamEnvelope<Object>>() {});
+            return new VoidOutput();
+        }
     }
 }

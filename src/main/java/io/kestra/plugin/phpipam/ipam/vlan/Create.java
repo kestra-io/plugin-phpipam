@@ -60,14 +60,15 @@ public class Create extends AbstractPhpipamTask implements RunnableTask<Create.O
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var body = new HashMap<String, Object>();
-        body.put("name", runContext.render(name).as(String.class).orElseThrow());
-        body.put("number", runContext.render(number).as(String.class).orElseThrow());
-        runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
+        try (var client = buildClient(runContext)) {
+            var body = new HashMap<String, Object>();
+            body.put("name", runContext.render(name).as(String.class).orElseThrow());
+            body.put("number", runContext.render(number).as(String.class).orElseThrow());
+            runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
 
-        var id = client.postCreate("vlan/", body);
-        return Output.builder().id(id).build();
+            var id = client.postCreate("vlan/", body);
+            return Output.builder().id(id).build();
+        }
     }
 
     @Builder

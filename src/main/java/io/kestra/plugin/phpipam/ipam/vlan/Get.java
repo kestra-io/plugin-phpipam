@@ -50,10 +50,11 @@ public class Get extends AbstractPhpipamTask implements RunnableTask<Get.Output>
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var rId = runContext.render(vlanId).as(String.class).orElseThrow();
-        var vlan = client.get("vlan/" + rId + "/", new TypeReference<PhpipamEnvelope<Vlan>>() {});
-        return Output.builder().vlan(vlan).build();
+        try (var client = buildClient(runContext)) {
+            var rId = runContext.render(vlanId).as(String.class).orElseThrow();
+            var vlan = client.get("vlan/" + rId + "/", new TypeReference<PhpipamEnvelope<Vlan>>() {});
+            return Output.builder().vlan(vlan).build();
+        }
     }
 
     @Builder

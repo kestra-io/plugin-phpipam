@@ -72,16 +72,17 @@ public class Create extends AbstractPhpipamTask implements RunnableTask<Create.O
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        var client = buildClient(runContext);
-        var body = new HashMap<String, Object>();
-        body.put("subnetId", runContext.render(subnetId).as(String.class).orElseThrow());
-        body.put("ip", runContext.render(ip).as(String.class).orElseThrow());
-        runContext.render(hostname).as(String.class).ifPresent(v -> body.put("hostname", v));
-        runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
-        runContext.render(owner).as(String.class).ifPresent(v -> body.put("owner", v));
+        try (var client = buildClient(runContext)) {
+            var body = new HashMap<String, Object>();
+            body.put("subnetId", runContext.render(subnetId).as(String.class).orElseThrow());
+            body.put("ip", runContext.render(ip).as(String.class).orElseThrow());
+            runContext.render(hostname).as(String.class).ifPresent(v -> body.put("hostname", v));
+            runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
+            runContext.render(owner).as(String.class).ifPresent(v -> body.put("owner", v));
 
-        var id = client.postCreate("addresses/", body);
-        return Output.builder().id(id).build();
+            var id = client.postCreate("addresses/", body);
+            return Output.builder().id(id).build();
+        }
     }
 
     @Builder

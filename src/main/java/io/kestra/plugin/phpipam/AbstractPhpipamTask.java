@@ -73,13 +73,30 @@ public abstract class AbstractPhpipamTask extends Task {
             .orElseThrow(() -> new IllegalArgumentException("appId is required"));
         var rInsecureTls = runContext.render(insecureTls).as(Boolean.class).orElse(false);
 
+        if (!rAppId.matches("[a-zA-Z0-9_-]+")) {
+            throw new IllegalArgumentException(
+                "appId must contain only alphanumeric characters, hyphens, and underscores");
+        }
+
+        if (rBaseUrl.startsWith("http://")) {
+            runContext.logger().warn(
+                "baseUrl uses plain HTTP — credentials are transmitted unencrypted.");
+        }
+
+        if (rInsecureTls) {
+            runContext.logger().warn(
+                "insecureTls is enabled — TLS certificate validation is disabled. Do not use in production.");
+        }
+
         var appToken = auth.getAppToken();
         var username = auth.getUsername();
         var password = auth.getPassword();
 
         boolean hasAppToken = appToken != null
             && runContext.render(appToken).as(String.class).map(s -> !s.isBlank()).orElse(false);
-        boolean hasUserPass = username != null && password != null;
+        boolean hasUserPass = username != null && password != null
+            && runContext.render(username).as(String.class).map(s -> !s.isBlank()).orElse(false)
+            && runContext.render(password).as(String.class).map(s -> !s.isBlank()).orElse(false);
 
         if (hasAppToken && hasUserPass) {
             throw new IllegalArgumentException(

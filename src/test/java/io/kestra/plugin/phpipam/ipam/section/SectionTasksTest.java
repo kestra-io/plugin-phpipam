@@ -70,6 +70,7 @@ class SectionTasksTest {
 
         assertThat(output.getSections(), hasSize(1));
         assertThat(output.getSections().getFirst().getName(), is("Production"));
+        assertThat(output.getTotal(), is(1));
     }
 
     @Test

@@ -71,6 +71,7 @@ class VrfTasksTest {
         assertThat(output.getVrfs(), hasSize(1));
         assertThat(output.getVrfs().getFirst().getName(), is("CORP-VRF"));
         assertThat(output.getVrfs().getFirst().getRd(), is("65000:1"));
+        assertThat(output.getTotal(), is(1));
     }
 
     @Test

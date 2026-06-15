@@ -37,7 +37,7 @@ import java.util.Map;
  * </ul>
  * One client instance is created per task run and should not be shared across runs.
  */
-public class PhpipamClient {
+public class PhpipamClient implements AutoCloseable {
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
@@ -83,6 +83,7 @@ public class PhpipamClient {
 
         try (var client = builder.build()) {
             var request = HttpRequest.newBuilder(URI.create(prefix))
+                .timeout(Duration.ofSeconds(30))
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .header("Authorization", "Basic " + credentials)
                 .header("Content-Type", "application/json")
@@ -159,11 +160,17 @@ public class PhpipamClient {
         }
     }
 
+    @Override
+    public void close() {
+        httpClient.close();
+    }
+
     private HttpRequest.Builder baseRequest(String path) {
         var uri = URI.create(basePrefix + "/" + stripLeadingSlash(path));
         // phpIPAM reads credentials exclusively from the "token" header ($_SERVER['HTTP_TOKEN'])
         // for both static app-code tokens and user session tokens — no X-App-Token header exists.
         return HttpRequest.newBuilder(uri)
+            .timeout(Duration.ofSeconds(30))
             .header("Content-Type", "application/json")
             .header("token", resolvedToken);
     }
