@@ -35,27 +35,71 @@
 </p>
 <p align="center" style="color:grey;"><i>Get started with Kestra in 3 minutes.</i></p>
 
-# Kestra PhpIPAM Plugin
+# Kestra phpIPAM Plugin
 
-## Why
-
-- What user problem does this solve? Teams need a concrete starting point for building and validating new Kestra plugins without recreating the same project scaffolding from scratch.
-- Why would a team adopt this plugin in a workflow? It gives plugin authors a ready-made reference repo they can adapt alongside their own build, test, and publishing workflow.
-- What operational/business outcome does it enable? It shortens plugin delivery time, reduces setup mistakes, and makes internal or partner plugin development more repeatable.
+Kestra plugin for [phpIPAM](https://phpipam.net/), the open-source IP Address Management (IPAM) application. Automate subnet provisioning, address allocation, and VLAN/VRF lifecycle management from Kestra workflows.
 
 ## What
 
-- Provides plugin components under `io.kestra.plugin.phpipam`.
-- Includes classes such as `Example`, `Trigger`.
+Tasks and triggers grouped by resource type under `io.kestra.plugin.phpipam.ipam.*`:
+
+| Package | Tasks |
+|---|---|
+| `ipam.section` | `List`, `Get`, `Create`, `Update`, `Delete` |
+| `ipam.subnet` | `List`, `Get`, `Create`, `Update`, `Delete`, `Search`, `FirstFree` |
+| `ipam.address` | `List`, `Get`, `Create`, `Update`, `Delete`, `FirstFree`, `NewAddressTrigger` |
+| `ipam.vlan` | `List`, `Get`, `Create`, `Update`, `Delete` |
+| `ipam.vrf` | `List`, `Get`, `Create`, `Update`, `Delete` |
+
+## Authentication
+
+Two mutually exclusive modes:
+
+| Mode | How to configure |
+|---|---|
+| Static App token | Set `auth.appToken` to the token from phpIPAM Administration → API. |
+| User/password session | Set `auth.username` + `auth.password`; a session token is obtained automatically via `POST /api/{appId}/user/`. |
+
+Both modes accept `{{ secret('...') }}` for credential values.
+
+## Quick start
+
+```yaml
+id: allocate_next_ip
+namespace: company.team
+tasks:
+  - id: get_free_ip
+    type: io.kestra.plugin.phpipam.ipam.address.FirstFree
+    baseUrl: "https://ipam.example.com"
+    appId: myapp
+    auth:
+      appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
+    subnetId: "10"
+
+  - id: register_ip
+    type: io.kestra.plugin.phpipam.ipam.address.Create
+    baseUrl: "https://ipam.example.com"
+    appId: myapp
+    auth:
+      appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
+    subnetId: "10"
+    ip: "{{ outputs.get_free_ip.ip }}"
+    hostname: "new-server.example.com"
+    description: "Provisioned by Kestra"
+```
+
+## Self-signed TLS
+
+For self-hosted instances with self-signed certificates, add `insecureTls: true` to any task or trigger. Use only in development or trusted internal environments.
 
 ## Documentation
-* Full documentation can be found under: [kestra.io/docs](https://kestra.io/docs)
-* Documentation for developing a plugin is included in the [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/)
 
+- Full documentation: [kestra.io/docs](https://kestra.io/docs)
+- Plugin Developer Guide: [kestra.io/docs/plugin-developer-guide](https://kestra.io/docs/plugin-developer-guide/)
 
 ## License
-Apache 2.0 © [Kestra Technologies](https://kestra.io)
 
+Apache 2.0 © [Kestra Technologies](https://kestra.io)
 
 ## Stay up to date
 

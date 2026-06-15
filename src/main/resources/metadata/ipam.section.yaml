@@ -1,0 +1,8 @@
+group: io.kestra.plugin.phpipam.ipam.section
+name: "section"
+title: "phpIPAM Sections"
+description: "Tasks for managing phpIPAM sections (logical groupings of subnets)."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
