@@ -1,6 +1,6 @@
 group: io.kestra.plugin.phpipam
 name: "phpipam"
-title: "PhpIPAM"
+title: "phpIPAM"
 description: "Interact with a self-hosted phpIPAM instance to manage IP Address Management (IPAM) resources: sections, subnets, IP addresses, VLANs, and VRFs."
 body: ""
 videos: []
