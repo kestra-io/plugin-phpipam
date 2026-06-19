@@ -98,7 +98,7 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-library"
 
     // WireMock for mocking phpIPAM HTTP API
-    testImplementation "org.wiremock:wiremock-jetty12:3.13.0"
+    testImplementation "org.wiremock:wiremock-jetty12:3.13.2"
 }
 
 /**********************************************************************************************************************\
