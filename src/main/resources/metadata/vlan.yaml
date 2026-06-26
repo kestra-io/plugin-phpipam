@@ -1,0 +1,8 @@
+group: io.kestra.plugin.phpipam.ipam.vlan
+name: "vlan"
+title: "phpIPAM VLANs"
+description: "Tasks for managing phpIPAM VLANs (802.1Q VLAN records)."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

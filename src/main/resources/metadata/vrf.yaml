@@ -1,0 +1,8 @@
+group: io.kestra.plugin.phpipam.ipam.vrf
+name: "vrf"
+title: "phpIPAM VRFs"
+description: "Tasks for managing phpIPAM VRFs (Virtual Routing and Forwarding instances)."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

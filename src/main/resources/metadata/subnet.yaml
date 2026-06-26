@@ -1,0 +1,8 @@
+group: io.kestra.plugin.phpipam.ipam.subnet
+name: "subnet"
+title: "phpIPAM Subnets"
+description: "Tasks for managing phpIPAM subnets, including search and first-free lookup."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
