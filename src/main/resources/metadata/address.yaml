@@ -1,0 +1,8 @@
+group: io.kestra.plugin.phpipam.ipam.address
+name: "address"
+title: "phpIPAM Addresses"
+description: "Tasks and triggers for managing phpIPAM IP address records."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
