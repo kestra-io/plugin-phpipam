@@ -43,6 +43,7 @@ import lombok.experimental.SuperBuilder;
                     auth:
                       appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
                     subnetId: "5"
+                    mask: "25"
                 """
         )
     }
@@ -57,11 +58,20 @@ public class FirstFree extends AbstractPhpipamTask implements RunnableTask<First
     @PluginProperty(group = "main")
     private Property<String> subnetId;
 
+    @Schema(
+        title = "Child subnet mask",
+        description = "CIDR prefix length (e.g. `25`) of the free child subnet to find within the master subnet. phpIPAM requires this to locate the first free slot of the requested size."
+    )
+    @NotNull
+    @PluginProperty(group = "main")
+    private Property<String> mask;
+
     @Override
     public Output run(RunContext runContext) throws Exception {
         try (var client = buildClient(runContext)) {
             var rId = runContext.render(subnetId).as(String.class).orElseThrow();
-            var cidr = client.get("subnets/" + rId + "/first_subnet/",
+            var rMask = runContext.render(mask).as(String.class).orElseThrow();
+            var cidr = client.get("subnets/" + rId + "/first_subnet/" + rMask + "/",
                 new TypeReference<PhpipamEnvelope<String>>() {});
             return Output.builder().cidr(cidr).build();
         }

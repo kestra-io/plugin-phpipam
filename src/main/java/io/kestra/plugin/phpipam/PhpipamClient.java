@@ -81,7 +81,8 @@ public class PhpipamClient implements AutoCloseable {
             builder.sslContext(trustAllSslContext());
         }
 
-        try (var client = builder.build()) {
+        var client = builder.build();
+        try {
             var request = HttpRequest.newBuilder(URI.create(prefix))
                 .timeout(Duration.ofSeconds(30))
                 .POST(HttpRequest.BodyPublishers.noBody())
@@ -110,6 +111,8 @@ public class PhpipamClient implements AutoCloseable {
                 throw new PhpipamApiException(200, "Session token missing from login response");
             }
             return token.toString();
+        } finally {
+            client.shutdownNow();
         }
     }
 
@@ -162,7 +165,12 @@ public class PhpipamClient implements AutoCloseable {
 
     @Override
     public void close() {
-        httpClient.close();
+        // java.net.http.HttpClient#close() performs a *graceful* shutdown that blocks until all
+        // pooled keep-alive connections are closed by the server. phpIPAM keeps the connection
+        // alive after PATCH/DELETE responses, so close() can block the task indefinitely
+        // (see issues #14/#15). All requests here are synchronous, so nothing is in-flight at
+        // this point: shut down immediately and force idle connections closed.
+        httpClient.shutdownNow();
     }
 
     private HttpRequest.Builder baseRequest(String path) {

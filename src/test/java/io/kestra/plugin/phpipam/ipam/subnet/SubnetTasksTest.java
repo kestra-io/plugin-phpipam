@@ -206,7 +206,7 @@ class SubnetTasksTest {
 
     @Test
     void first_free_returns_cidr() throws Exception {
-        wireMock.stubFor(get(urlEqualTo("/api/myapp/subnets/10/first_subnet/"))
+        wireMock.stubFor(get(urlEqualTo("/api/myapp/subnets/10/first_subnet/25/"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBody(WireMockSupport.successBody("\"192.168.1.128/25\""))));
@@ -218,6 +218,7 @@ class SubnetTasksTest {
             .appId(Property.ofValue("myapp"))
             .auth(auth())
             .subnetId(Property.ofValue("10"))
+            .mask(Property.ofValue("25"))
             .build();
 
         var output = task.run(runContext());
