@@ -5,7 +5,6 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.phpipam.AbstractPhpipamTask;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,7 +38,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Delete extends AbstractPhpipamTask implements RunnableTask<VoidOutput> {
+public class Delete extends AbstractPhpipamTask implements RunnableTask<Delete.Output> {
 
     @Schema(title = "VLAN ID", description = "Numeric ID of the VLAN to delete.")
     @NotNull
@@ -47,11 +46,21 @@ public class Delete extends AbstractPhpipamTask implements RunnableTask<VoidOutp
     private Property<String> vlanId;
 
     @Override
-    public VoidOutput run(RunContext runContext) throws Exception {
+    public Output run(RunContext runContext) throws Exception {
         try (var client = buildClient(runContext)) {
             var rId = runContext.render(vlanId).as(String.class).orElseThrow();
             client.delete("vlan/" + rId + "/");
-            return new VoidOutput();
+            return Output.builder().id(rId).deleted(true).build();
         }
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(title = "Deleted VLAN ID", description = "The numeric ID of the deleted VLAN.")
+        private final String id;
+
+        @Schema(title = "Deleted", description = "True when the VLAN was deleted.")
+        private final Boolean deleted;
     }
 }

@@ -6,7 +6,6 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.phpipam.AbstractPhpipamTask;
 import io.kestra.plugin.phpipam.PhpipamEnvelope;
@@ -47,7 +46,7 @@ import java.util.HashMap;
         )
     }
 )
-public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutput> {
+public class Update extends AbstractPhpipamTask implements RunnableTask<Update.Output> {
 
     @Schema(title = "Subnet ID", description = "Numeric ID of the subnet to update.")
     @NotNull
@@ -67,7 +66,7 @@ public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutp
     private Property<String> vrfId;
 
     @Override
-    public VoidOutput run(RunContext runContext) throws Exception {
+    public Output run(RunContext runContext) throws Exception {
         try (var client = buildClient(runContext)) {
             var rId = runContext.render(subnetId).as(String.class).orElseThrow();
             var body = new HashMap<String, Object>();
@@ -78,7 +77,17 @@ public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutp
 
             client.patch("subnets/" + rId + "/", body,
                 new TypeReference<PhpipamEnvelope<Object>>() {});
-            return new VoidOutput();
+            return Output.builder().id(rId).updated(true).build();
         }
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(title = "Updated subnet ID", description = "The numeric ID of the updated subnet.")
+        private final String id;
+
+        @Schema(title = "Updated", description = "True when the subnet was updated.")
+        private final Boolean updated;
     }
 }
