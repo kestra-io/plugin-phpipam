@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.phpipam.AbstractPhpipamTask;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -41,7 +42,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Delete extends AbstractPhpipamTask implements RunnableTask<Delete.Output> {
+public class Delete extends AbstractPhpipamTask implements RunnableTask<VoidOutput> {
 
     @Schema(title = "Section ID", description = "Numeric ID of the section to delete.")
     @NotNull
@@ -49,21 +50,11 @@ public class Delete extends AbstractPhpipamTask implements RunnableTask<Delete.O
     private Property<String> sectionId;
 
     @Override
-    public Output run(RunContext runContext) throws Exception {
+    public VoidOutput run(RunContext runContext) throws Exception {
         try (var client = buildClient(runContext)) {
             var rId = runContext.render(sectionId).as(String.class).orElseThrow();
             client.delete("sections/" + rId + "/");
-            return Output.builder().id(rId).deleted(true).build();
+            return null;
         }
-    }
-
-    @Builder
-    @Getter
-    public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Deleted section ID", description = "The numeric ID of the deleted section.")
-        private final String id;
-
-        @Schema(title = "Deleted", description = "True when the section was deleted.")
-        private final Boolean deleted;
     }
 }
