@@ -78,7 +78,7 @@ public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutp
 
             client.patch("subnets/" + rId + "/", body,
                 new TypeReference<PhpipamEnvelope<Object>>() {});
-            return new VoidOutput();
+            return null;
         }
     }
 }

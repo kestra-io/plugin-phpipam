@@ -74,7 +74,7 @@ public class Update extends AbstractPhpipamTask implements RunnableTask<VoidOutp
             runContext.render(resourceDescription).as(String.class).ifPresent(v -> body.put("description", v));
 
             client.patch("vrf/" + rId + "/", body, new TypeReference<PhpipamEnvelope<Object>>() {});
-            return new VoidOutput();
+            return null;
         }
     }
 }

@@ -51,7 +51,7 @@ public class Delete extends AbstractPhpipamTask implements RunnableTask<VoidOutp
         try (var client = buildClient(runContext)) {
             var rId = runContext.render(vlanId).as(String.class).orElseThrow();
             client.delete("vlan/" + rId + "/");
-            return new VoidOutput();
+            return null;
         }
     }
 }
