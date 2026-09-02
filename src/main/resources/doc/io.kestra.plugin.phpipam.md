@@ -9,7 +9,7 @@ All tasks and the trigger require `baseUrl` (the phpIPAM root URL, e.g. `https:/
 - `appToken` — a static App token generated in phpIPAM (sent as the `token` header), or
 - `username` + `password` — credentials used to obtain a per-run session token.
 
-Supplying both modes, or neither, raises a validation error. Optionally set `insecureTls` (default `false`; set to `true` to trust self-signed certificates — development/internal use only). Store secrets in [secrets](https://kestra.io/docs/concepts/secret) and apply connection properties globally with [plugin defaults](https://kestra.io/docs/workflow-components/plugin-defaults).
+Supplying both modes, or neither, raises a validation error. Optionally set `insecureTls` (default `false`; set to `true` to trust self-signed certificates — development/internal use only). Store secrets in [secrets](https://kestra.io/docs/concepts/secret) and set connection properties on each task.
 
 ## Tasks
 
