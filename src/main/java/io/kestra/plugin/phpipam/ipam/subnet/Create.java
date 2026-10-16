@@ -41,7 +41,7 @@ import java.util.HashMap;
                     subnet: "192.168.1.0"
                     mask: "24"
                     sectionId: "1"
-                    description: "Office LAN"
+                    resourceDescription: "Office LAN"
                 """
         )
     }

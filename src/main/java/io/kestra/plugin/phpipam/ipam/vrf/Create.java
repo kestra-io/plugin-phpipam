@@ -37,7 +37,7 @@ import java.util.HashMap;
                       appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
                     name: "CORP-VRF"
                     rd: "65000:1"
-                    description: "Corporate routing domain"
+                    resourceDescription: "Corporate routing domain"
                 """
         )
     }

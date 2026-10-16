@@ -37,7 +37,7 @@ import java.util.HashMap;
                       appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
                     name: "MGMT"
                     number: "100"
-                    description: "Management VLAN"
+                    resourceDescription: "Management VLAN"
                 """
         )
     }

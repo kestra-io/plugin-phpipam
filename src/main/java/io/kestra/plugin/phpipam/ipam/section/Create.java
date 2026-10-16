@@ -39,7 +39,7 @@ import java.util.HashMap;
                     auth:
                       appToken: "{{ secret('PHPIPAM_APP_TOKEN') }}"
                     name: "Production"
-                    description: "Production network section"
+                    resourceDescription: "Production network section"
                 """
         )
     }

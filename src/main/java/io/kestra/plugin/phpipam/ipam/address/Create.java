@@ -41,7 +41,7 @@ import java.util.HashMap;
                     subnetId: "10"
                     ip: "192.168.1.100"
                     hostname: "server01.example.com"
-                    description: "Web server"
+                    resourceDescription: "Web server"
                 """
         )
     }

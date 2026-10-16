@@ -85,7 +85,7 @@ tasks:
     subnetId: "10"
     ip: "{{ outputs.get_free_ip.ip }}"
     hostname: "new-server.example.com"
-    description: "Provisioned by Kestra"
+    resourceDescription: "Provisioned by Kestra"
 ```
 
 ## Self-signed TLS
