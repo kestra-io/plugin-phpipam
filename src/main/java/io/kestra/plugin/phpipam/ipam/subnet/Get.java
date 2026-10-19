@@ -57,6 +57,14 @@ public class Get extends AbstractPhpipamTask implements RunnableTask<Get.Output>
             var rId = runContext.render(subnetId).as(String.class).orElseThrow();
             var subnet = client.get("subnets/" + rId + "/",
                 new TypeReference<PhpipamEnvelope<Subnet>>() {});
+            try {
+                var usage = client.get("subnets/" + rId + "/usage/",
+                    new TypeReference<PhpipamEnvelope<Subnet.SubnetUsage>>() {});
+                subnet.setUsage(usage);
+            } catch (Exception e) {
+                runContext.logger().warn("Failed to retrieve usage for phpIPAM subnet {}: {}",
+                    rId, e.getMessage());
+            }
             return Output.builder().subnet(subnet).build();
         }
     }
