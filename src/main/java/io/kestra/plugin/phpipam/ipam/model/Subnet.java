@@ -23,6 +23,10 @@ public class Subnet {
     @JsonProperty("editDate") private String editDate;
     @JsonProperty("usage") private SubnetUsage usage;
 
+    public void setUsage(SubnetUsage usage) {
+        this.usage = usage;
+    }
+
     @Getter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
