@@ -22,7 +22,10 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Schema(
     title = "Get a phpIPAM subnet",
-    description = "Retrieves a single subnet by its numeric ID."
+    description = """
+        Retrieves a single subnet by its numeric ID.
+        The task also requests `subnets/<id>/usage/` and attaches the result to `subnet.usage`.
+        If that second request fails, the subnet is still returned, `subnet.usage` is null and a warning is logged."""
 )
 @Plugin(
     examples = {
@@ -61,6 +64,9 @@ public class Get extends AbstractPhpipamTask implements RunnableTask<Get.Output>
                 var usage = client.get("subnets/" + rId + "/usage/",
                     new TypeReference<PhpipamEnvelope<Subnet.SubnetUsage>>() {});
                 subnet.setUsage(usage);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw e;
             } catch (Exception e) {
                 runContext.logger().warn("Failed to retrieve usage for phpIPAM subnet {}: {}",
                     rId, e.getMessage());

@@ -24,7 +24,7 @@ Tasks are grouped by resource under `ipam.*`. Two conventions apply across them:
 
 ### Subnets
 
-`ipam.subnet` — List, Get, Create, Update, Delete, plus `Search` and `FirstFree`. `List` requires `sectionId`. `Create` requires `subnet` (network address), `mask` (CIDR prefix length), and `sectionId`; optional `resourceDescription`, `vlanId`, `vrfId`. `Search` finds subnets by `cidr` (required; IPv4 CIDR such as `192.168.1.0/24`, validated) and outputs matching `subnets`. `FirstFree` requires `subnetId` (a master subnet) and returns the `cidr` of the first available child-subnet slot, erroring if none exists.
+`ipam.subnet` — List, Get, Create, Update, Delete, plus `Search` and `FirstFree`. `Get` also requests the subnet's usage and attaches it as `subnet.usage`; if that request fails the subnet is still returned with a null `usage`. `List` requires `sectionId`. `Create` requires `subnet` (network address), `mask` (CIDR prefix length), and `sectionId`; optional `resourceDescription`, `vlanId`, `vrfId`. `Search` finds subnets by `cidr` (required; IPv4 CIDR such as `192.168.1.0/24`, validated) and outputs matching `subnets`. `FirstFree` requires `subnetId` (a master subnet) and returns the `cidr` of the first available child-subnet slot, erroring if none exists.
 
 ### Addresses
 
