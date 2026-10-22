@@ -22,7 +22,12 @@ public class Subnet {
     @JsonProperty("showName") private String showName;
     @JsonProperty("permissions") private String permissions;
     @JsonProperty("editDate") private String editDate;
-    @Schema(title = "Usage", description = "Address usage reported by phpIPAM for this subnet. Only set by `Get`, and null when the usage request fails.")
+    @Schema(
+        title = "Usage",
+        description = """
+            Address usage reported by phpIPAM for this subnet.
+            Only set by `Get`. It is null when the usage request fails."""
+    )
     @JsonProperty("usage") private SubnetUsage usage;
 
     public void setUsage(SubnetUsage usage) {
