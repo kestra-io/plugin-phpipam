@@ -83,6 +83,11 @@ class SubnetTasksTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody(WireMockSupport.successBody(
                     "{\"id\":\"10\",\"subnet\":\"10.0.0.0\",\"mask\":\"24\",\"sectionId\":\"1\",\"description\":\"Test\"}"))));
+        wireMock.stubFor(get(urlEqualTo("/api/myapp/subnets/10/usage/"))
+            .willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBody(WireMockSupport.successBody(
+                    "{\"used\":3,\"maxhosts\":254,\"freehosts\":251,\"freehosts_percent\":98,\"Offline_percent\":0}"))));
 
         var task = Get.builder()
             .id(UUID.randomUUID().toString())
@@ -97,6 +102,41 @@ class SubnetTasksTest {
 
         assertThat(output.getSubnet().getId(), is("10"));
         assertThat(output.getSubnet().getDescription(), is("Test"));
+        assertThat(output.getSubnet().getUsage().getUsed(), is("3"));
+        assertThat(output.getSubnet().getUsage().getMaxHosts(), is("254"));
+        assertThat(output.getSubnet().getUsage().getFreeHosts(), is("251"));
+        assertThat(output.getSubnet().getUsage().getFreeHostsPercent(), is("98"));
+        assertThat(output.getSubnet().getUsage().getOfflinePercent(), is("0"));
+        wireMock.verify(1, getRequestedFor(urlEqualTo("/api/myapp/subnets/10/usage/")));
+    }
+
+    @Test
+    void get_returns_subnet_when_usage_request_fails() throws Exception {
+        wireMock.stubFor(get(urlEqualTo("/api/myapp/subnets/10/"))
+            .willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBody(WireMockSupport.successBody(
+                    "{\"id\":\"10\",\"subnet\":\"10.0.0.0\",\"mask\":\"24\"}"))));
+        wireMock.stubFor(get(urlEqualTo("/api/myapp/subnets/10/usage/"))
+            .willReturn(aResponse()
+                .withStatus(500)
+                .withHeader("Content-Type", "application/json")
+                .withBody(WireMockSupport.failureBody(500, "usage unavailable"))));
+
+        var task = Get.builder()
+            .id(UUID.randomUUID().toString())
+            .type(Get.class.getName())
+            .baseUrl(Property.ofValue(WireMockSupport.baseUrl(wireMock)))
+            .appId(Property.ofValue("myapp"))
+            .auth(auth())
+            .subnetId(Property.ofValue("10"))
+            .build();
+
+        var output = task.run(runContext());
+
+        assertThat(output.getSubnet().getId(), is("10"));
+        assertThat(output.getSubnet().getUsage(), nullValue());
+        wireMock.verify(1, getRequestedFor(urlEqualTo("/api/myapp/subnets/10/usage/")));
     }
 
     @Test
